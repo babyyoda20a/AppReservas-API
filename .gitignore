@@ -1,0 +1,10 @@
+# PHP
+vendor/
+composer.lock
+.env
+*.log
+
+# IDE / SO
+.idea/
+.vscode/
+.DS_Store
