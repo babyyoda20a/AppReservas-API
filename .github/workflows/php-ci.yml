@@ -1,0 +1,29 @@
+name: PHP API CI
+
+on:
+  push:
+    paths:
+      - '**.php'
+      - 'composer.*'
+      - 'Dockerfile'
+      - '.github/workflows/php-ci.yml'
+  pull_request:
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - name: Validate composer.json
+        run: composer validate --no-interaction
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+      - name: Lint PHP (syntax)
+        run: |
+          find . -type f -name "*.php" -not -path "./vendor/*" -print0 | xargs -0 -n1 php -l
+      - name: Build Docker image (sanity check)
+        run: docker build -t salasubo-api:ci .
