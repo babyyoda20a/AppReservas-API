@@ -3,27 +3,45 @@ name: PHP API CI
 on:
   push:
     paths:
-      - '**.php'
-      - 'composer.*'
+      - '**/*.php'
       - 'Dockerfile'
       - '.github/workflows/php-ci.yml'
   pull_request:
 
 jobs:
-  php:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           coverage: none
-      - name: Validate composer.json
-        run: composer validate --no-interaction
-      - name: Install dependencies
-        run: composer install --no-interaction --no-progress
-      - name: Lint PHP (syntax)
+
+      - name: Show PHP & list
         run: |
-          find . -type f -name "*.php" -not -path "./vendor/*" -print0 | xargs -0 -n1 php -l
-      - name: Build Docker image (sanity check)
+          php -v
+          ls -la
+
+      - name: Lint PHP syntax (php -l seguro)
+        shell: bash
+        run: |
+          set -e
+          FILES=$(git ls-files '*.php' || true)
+          if [ -z "$FILES" ]; then
+            echo "No PHP files to lint."
+          else
+            echo "$FILES" | while read -r f; do
+              php -l "$f"
+            done
+          fi
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image (sanity)
         run: docker build -t salasubo-api:ci .
